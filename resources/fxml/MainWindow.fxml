@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.*?>
+<Pane xmlns:fx="http://javafx.com/fxml/1" fx:id="pane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity"
+      minWidth="-Infinity" prefHeight="324.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8"
+      fx:controller="com.enderliquid.wallpaper.controller.Controller">
+    <children>
+        <Text fx:id="currentModeText" layoutX="159.0" layoutY="136.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Mode"
+              wrappingWidth="93.240234375">
+            <font>
+                <Font size="16.0"/>
+            </font>
+        </Text>
+        <Text layoutX="45.0" layoutY="136.0" strokeType="OUTSIDE" strokeWidth="0.0" text="当前操控模式："
+              wrappingWidth="114.240234375">
+            <font>
+                <Font size="16.0"/>
+            </font>
+        </Text>
+        <ToggleButton fx:id="switchModeButton" layoutX="402.0" layoutY="113.0" mnemonicParsing="false"
+                      onAction="#switchModeEvent" prefHeight="33.0" prefWidth="80.0" selected="true" text="切换模式">
+            <font>
+                <Font size="15.0"/>
+            </font>
+            <toggleGroup>
+                <ToggleGroup fx:id="mode"/>
+            </toggleGroup>
+        </ToggleButton>
+        <ToggleButton fx:id="switchStateButton" layoutX="402.0" layoutY="183.0" mnemonicParsing="false"
+                      onAction="#switchStateEvent" prefHeight="33.0" prefWidth="80.0" selected="true" text="切换状态">
+            <font>
+                <Font size="15.0"/>
+            </font>
+            <toggleGroup>
+                <ToggleGroup fx:id="state"/>
+            </toggleGroup>
+        </ToggleButton>
+        <Text layoutX="45.0" layoutY="206.0" strokeType="OUTSIDE" strokeWidth="0.0" text="当前状态："
+              wrappingWidth="82.240234375">
+            <font>
+                <Font size="16.0"/>
+            </font>
+        </Text>
+        <Text fx:id="currentStateText" layoutX="127.0" layoutY="206.0" strokeType="OUTSIDE" strokeWidth="0.0"
+              text="State" wrappingWidth="93.240234375">
+            <font>
+                <Font size="16.0"/>
+            </font>
+        </Text>
+        <Text fx:id="currentWallpaperText" layoutX="45.0" layoutY="67.0" strokeType="OUTSIDE" strokeWidth="0.0"
+              text="Name:Path" wrappingWidth="348.240234375">
+            <font>
+                <Font size="14.0"/>
+            </font>
+        </Text>
+        <Text layoutX="45.0" layoutY="50.0" strokeType="OUTSIDE" strokeWidth="0.0" text="当前壁纸："
+              wrappingWidth="82.240234375">
+            <font>
+                <Font size="16.0"/>
+            </font>
+        </Text>
+        <Button fx:id="previousButton" layoutX="487.0" layoutY="44.0" mnemonicParsing="false" onAction="#previousEvent"
+                prefHeight="34.0" prefWidth="80.0" text="下一张">
+            <font>
+                <Font size="15.0"/>
+            </font>
+        </Button>
+        <Button fx:id="nextButton" layoutX="402.0" layoutY="44.0" mnemonicParsing="false" onAction="#nextEvent"
+                prefHeight="34.0" prefWidth="80.0" text="上一张">
+            <font>
+                <Font size="15.0"/>
+            </font>
+        </Button>
+        <Button fx:id="exitButton" layoutX="487.0" layoutY="247.0" mnemonicParsing="false" onAction="#exitEvent"
+                prefHeight="34.0" prefWidth="80.0" text="退出">
+            <font>
+                <Font size="15.0"/>
+            </font>
+        </Button>
+        <Button fx:id="openConfigButton" layoutX="45.0" layoutY="247.0" mnemonicParsing="false"
+                onAction="#openConfigEvent" prefHeight="34.0" prefWidth="114.0" text="打开配置文件">
+            <font>
+                <Font size="15.0"/>
+            </font>
+        </Button>
+        <Button fx:id="reloadButton" layoutX="402.0" layoutY="247.0" mnemonicParsing="false" onAction="#reloadEvent"
+                prefHeight="34.0" prefWidth="80.0" text="重载">
+            <font>
+                <Font size="15.0"/>
+            </font>
+        </Button>
+        <Button fx:id="openWallpaperDirButton" layoutX="164.0" layoutY="247.0" mnemonicParsing="false"
+                onAction="#openWallpaperDirEvent" prefHeight="34.0" prefWidth="114.0" text="打开壁纸目录">
+            <font>
+                <Font size="15.0"/>
+            </font>
+        </Button>
+    </children>
+</Pane>
