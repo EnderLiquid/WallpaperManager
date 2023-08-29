@@ -177,7 +177,7 @@ public class WallpaperManager {
         }
     }
 
-    public static void next(boolean resetting) {
+    public static void next(boolean updateScheduler) {
         synchronized (WALLPAPER_LOCKER) {
             if (state == State.IN_CLASS || wallpapers.size() == 1) return;
             index++;
@@ -185,7 +185,7 @@ public class WallpaperManager {
             WallpaperChanger.changeWallpaper(wallpapers.get(index));
             WallpaperInfoRecorder.record(getWallpaperInfo());
             Controller.flushCurrentWallpaperText();
-            if (resetting) {
+            if (updateScheduler) {
                 synchronized (SCHEDULE_LOCKER) {
                     scheduler.wallpaperSwitchTimer.reset();
                 }
@@ -193,7 +193,7 @@ public class WallpaperManager {
         }
     }
 
-    public static void previous(boolean resetting) {
+    public static void previous(boolean updateScheduler) {
         synchronized (WALLPAPER_LOCKER) {
             if (state == State.IN_CLASS || wallpapers.size() == 1) return;
             index--;
@@ -201,7 +201,7 @@ public class WallpaperManager {
             WallpaperChanger.changeWallpaper(wallpapers.get(index));
             WallpaperInfoRecorder.record(getWallpaperInfo());
             Controller.flushCurrentWallpaperText();
-            if (resetting) {
+            if (updateScheduler) {
                 synchronized (SCHEDULE_LOCKER) {
                     scheduler.wallpaperSwitchTimer.reset();
                 }
@@ -228,9 +228,9 @@ public class WallpaperManager {
         }
     }
 
-    public static void setState(State s, boolean forceUpdating) {
+    public static void setState(State s, boolean updateScheduler) {
         synchronized (WALLPAPER_LOCKER) {
-            if (!forceUpdating && state == s) return;
+            if (!updateScheduler && state == s) return;
             state = s;
             switch (state) {
                 case IN_CLASS:
@@ -260,9 +260,9 @@ public class WallpaperManager {
         }
     }
 
-    public static void setMode(Mode m, boolean forceUpdating) {
+    public static void setMode(Mode m, boolean updateScheduler) {
         synchronized (MODE_LOCKER) {
-            if (!forceUpdating && mode == m) return;
+            if (!updateScheduler && mode == m) return;
             mode = m;
             switch (mode) {
                 case AUTOMATIC:

@@ -199,24 +199,23 @@ public class Controller extends Application {
         Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
         primaryStage.setX(dimension.width - instance.pane.getPrefWidth());
         primaryStage.setY(dimension.height - instance.pane.getPrefHeight() - 70);
-        if (getGlobalConfig().isUsingShortcuts()) {
-            globalLogger.info("正在注册并监听快捷键");
-            try {
-                JIntellitype.getInstance().registerHotKey(HIDE_OR_SHOW_MARK, JIntellitype.MOD_CONTROL + JIntellitype.MOD_ALT, 'D');
-                JIntellitype.getInstance().registerHotKey(URGENT_PROCESS_MARK, JIntellitype.MOD_CONTROL + JIntellitype.MOD_ALT, 'E');
-                JIntellitype.getInstance().addHotKeyListener((markCode) -> {
-                    switch (markCode) {
-                        case HIDE_OR_SHOW_MARK:
-                            hideOrShow();
-                            break;
-                        case URGENT_PROCESS_MARK:
-                            urgentProcess();
-                            break;
-                    }
-                });
-            } catch (JIntellitypeException e) {
-                globalLogger.warning("快捷键无法被注册并监听");
-            }
+        globalLogger.info("正在注册并监听快捷键");
+        try {
+            JIntellitype.getInstance().registerHotKey(HIDE_OR_SHOW_MARK, JIntellitype.MOD_CONTROL + JIntellitype.MOD_ALT, 'D');
+            JIntellitype.getInstance().registerHotKey(URGENT_PROCESS_MARK, JIntellitype.MOD_CONTROL + JIntellitype.MOD_ALT, 'E');
+            JIntellitype.getInstance().addHotKeyListener((markCode) -> {
+                if (!getGlobalConfig().isEnableShortcuts()) return;
+                switch (markCode) {
+                    case HIDE_OR_SHOW_MARK:
+                        hideOrShow();
+                        break;
+                    case URGENT_PROCESS_MARK:
+                        urgentProcess();
+                        break;
+                }
+            });
+        } catch (JIntellitypeException e) {
+            globalLogger.warning("快捷键无法被注册并监听");
         }
         primaryStage.show();
         globalLogger.info("正在创建系统托盘");

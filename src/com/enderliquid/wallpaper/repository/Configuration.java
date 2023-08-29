@@ -29,7 +29,7 @@ public class Configuration {
     public static final int defaultWallpaperInfoRecordInterval = 20;//Scheduler相关
     public static final int defaultSyncWithScheduleInterval = 30;//Scheduler相关
     public static final int defaultPort = 25564;
-    public static final boolean defaultUsingShortcuts = true;
+    public static final boolean defaultEnableShortcuts = true;
     public static final int[][] defaultSchedule = new int[][]{
             {10710, 10750},
             {10800, 10840},
@@ -42,7 +42,7 @@ public class Configuration {
     private int applyWallpaperModificationDelayInMillis = defaultApplyWallpaperModificationDelayInMillis;
     private int wallpaperInfoRecordInterval = defaultWallpaperInfoRecordInterval;
     private int syncWithScheduleInterval = defaultSyncWithScheduleInterval;
-    private boolean usingShortcuts = defaultUsingShortcuts;
+    private boolean enableShortcuts = defaultEnableShortcuts;
     private int port = defaultPort;
     private int[][] schedule = defaultSchedule;
     @JSONField(serialize = false, deserialize = false)
@@ -204,13 +204,13 @@ public class Configuration {
         this.schedule = schedule;
     }
 
-    public boolean isUsingShortcuts() {
-        return usingShortcuts;
+    public boolean isEnableShortcuts() {
+        return enableShortcuts;
     }
 
-    public void setUsingShortcuts(boolean usingShortcuts) {
+    public void setEnableShortcuts(boolean enableShortcuts) {
         if (!editable) throw new UnsupportedOperationException();
-        this.usingShortcuts = usingShortcuts;
+        this.enableShortcuts = enableShortcuts;
     }
 
     public int getPort() {
