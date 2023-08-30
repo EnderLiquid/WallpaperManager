@@ -61,7 +61,6 @@ public class WallpaperManager {
         loadScheduler();
         setState(state, true);
         setMode(mode, true);
-        Runtime.getRuntime().gc();
     }
 
     public static void loadLogger() {

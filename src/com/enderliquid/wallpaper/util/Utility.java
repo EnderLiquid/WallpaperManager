@@ -19,13 +19,13 @@ public class Utility {
     public static String exceptionDetailsOf(Exception e) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(lineSeparator())
-                .append(e.getClass().toString())
-                .append(":")
+                .append(e.getClass())
+                .append(':')
                 .append(lineSeparator())
                 .append(e.getMessage())
                 .append(lineSeparator());
         for (StackTraceElement t : e.getStackTrace()) {
-            stringBuilder.append(t.toString()).append(lineSeparator());
+            stringBuilder.append(t).append(lineSeparator());
         }
         return stringBuilder.toString();
     }

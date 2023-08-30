@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
@@ -89,14 +90,13 @@ public class Configuration {
             configFile = new File(configFile, "config.json");
             if (configFile.createNewFile()) {
                 globalLogger.info("未检测到配置文件，将使用默认配置，并生成默认配置文件");
-                try (FileWriter defaultConfigWriter = new FileWriter(configFile)) {
-                    Configuration defaultInstance = getDefaultInstance();
-                    defaultConfigWriter.write(JSON.toJSONString(defaultInstance, SerializerFeature.PrettyFormat));
-                    return defaultInstance;
+                Configuration defaultConfig = getDefaultInstance();
+                try (FileWriter defaultConfigWriter = new FileWriter(configFile, StandardCharsets.UTF_8)) {
+                    defaultConfigWriter.write(JSON.toJSONString(defaultConfig, SerializerFeature.PrettyFormat));
                 } catch (IOException e) {
                     globalLogger.warning("无法生成默认配置文件" + Utility.exceptionDetailsOf(e));
-                    return getDefaultInstance();
                 }
+                return defaultConfig;
             }
             FileReader configReader = new FileReader(configFile);
             Scanner configScanner = new Scanner(configReader);
