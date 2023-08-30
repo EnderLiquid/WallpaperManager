@@ -176,7 +176,7 @@ public class WallpaperManager {
                     }
                 }
             }
-            if (nextUpdateDelay <= System.currentTimeMillis() - startMillis) return;
+            if (nextUpdateDelay <= System.currentTimeMillis() - startMillis + 100) return;
             setState(latestUpdate, false);
         }
     }
