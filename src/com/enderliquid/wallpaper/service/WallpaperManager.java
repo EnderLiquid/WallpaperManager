@@ -155,11 +155,13 @@ public class WallpaperManager {
         synchronized (SYNC_LOCKER) {
             globalLogger.info("正在与日程表同步");
             State latestUpdate = State.AFTER_CLASS;
-            long latestUpdateDelay = -1;
-            LocalDateTime now = LocalDateTime.now();
+            long latestUpdateDelay = -1;//millis
+            long nextUpdateDelay = 7 * 24 * 60 * 60 * 1000L + 1;
+            LocalDateTime startTime = LocalDateTime.now();
+            long startMillis = System.currentTimeMillis();
             for (TimeOfWeek[] clazz : getGlobalConfig().getScheduleInObjects()) {
                 for (int i = 0; i <= 1; i++) {
-                    long delay = clazz[i].getDelay(now);
+                    long delay = clazz[i].getDelay(startTime);
                     if (delay > latestUpdateDelay) {
                         switch (i) {
                             case 0:
@@ -171,8 +173,12 @@ public class WallpaperManager {
                         }
                         latestUpdateDelay = delay;
                     }
+                    if (delay < nextUpdateDelay) {
+                        nextUpdateDelay = delay;
+                    }
                 }
             }
+            if (nextUpdateDelay <= System.currentTimeMillis() - startMillis) return;
             setState(latestUpdate, false);
         }
     }
