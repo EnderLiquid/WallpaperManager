@@ -1,6 +1,6 @@
 package com.enderliquid.wallpaper.service;
 
-import com.enderliquid.wallpaper.repository.WallpaperInfoRecorder;
+import com.enderliquid.wallpaper.repository.WallpaperInfoHandler;
 
 import static com.enderliquid.wallpaper.service.WallpaperManager.globalLogger;
 
@@ -14,7 +14,7 @@ public class ShutdownHook extends Thread {
         }
         shuttingDown = true;
         try {
-            WallpaperInfoRecorder.record(WallpaperManager.getWallpaperInfo());
+            WallpaperInfoHandler.record(WallpaperManager.getWallpaperInfo());
         } catch (NullPointerException e) {
             globalLogger.warning("调度器未被初始化");
         }

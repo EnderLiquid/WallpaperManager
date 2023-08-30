@@ -2,7 +2,7 @@ package com.enderliquid.wallpaper.service;
 
 import com.enderliquid.wallpaper.model.TimeOfWeek;
 import com.enderliquid.wallpaper.repository.Configuration;
-import com.enderliquid.wallpaper.repository.WallpaperInfoRecorder;
+import com.enderliquid.wallpaper.repository.WallpaperInfoHandler;
 
 import java.time.LocalDateTime;
 import java.util.LinkedList;
@@ -21,7 +21,7 @@ public class Scheduler {
         long remainingTime;
         Configuration config = WallpaperManager.getGlobalConfig();
         try {
-            remainingTime = Objects.requireNonNull(WallpaperInfoRecorder.inquire()).remainingTime;
+            remainingTime = Objects.requireNonNull(WallpaperInfoHandler.inquire()).remainingTime;
         } catch (NullPointerException e) {
             remainingTime = config.getWallpaperDisplayTime() * 1000L;
         }
@@ -31,7 +31,7 @@ public class Scheduler {
                 config.getWallpaperDisplayTime() * 1000L
         );
         wallpaperInfoRecordTimer = new FixedRateTimer(
-                () -> WallpaperInfoRecorder.record(WallpaperManager.getWallpaperInfo()),
+                () -> WallpaperInfoHandler.record(WallpaperManager.getWallpaperInfo()),
                 config.getWallpaperInfoRecordInterval() * 1000L,
                 config.getWallpaperInfoRecordInterval() * 1000L
         );

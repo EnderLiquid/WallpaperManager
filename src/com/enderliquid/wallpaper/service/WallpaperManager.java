@@ -5,7 +5,7 @@ import com.enderliquid.wallpaper.model.TimeOfWeek;
 import com.enderliquid.wallpaper.model.WallpaperInfo;
 import com.enderliquid.wallpaper.repository.Configuration;
 import com.enderliquid.wallpaper.repository.ImageDeepScanner;
-import com.enderliquid.wallpaper.repository.WallpaperInfoRecorder;
+import com.enderliquid.wallpaper.repository.WallpaperInfoHandler;
 import com.enderliquid.wallpaper.util.Utility;
 import javafx.application.Application;
 
@@ -46,7 +46,7 @@ public class WallpaperManager {
             exit(-1);
         }
         globalLogger.info("开始进行初始化");
-        WallpaperInfoRecorder.initialize();
+        WallpaperInfoHandler.initialize();
         WallpaperChanger.initialize();
         load();
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
@@ -116,7 +116,7 @@ public class WallpaperManager {
             }
             Collections.sort(wallpapers);
             globalLogger.info("成功加载壁纸");
-            WallpaperInfo info = WallpaperInfoRecorder.inquire();
+            WallpaperInfo info = WallpaperInfoHandler.inquire();
             if (info != null) {
                 index = Collections.binarySearch(wallpapers, new File(info.wallpaper));
                 if (index < 0) {
@@ -124,11 +124,11 @@ public class WallpaperManager {
                     if (index >= wallpapers.size()) {
                         index = 0;
                     }
-                    WallpaperInfoRecorder.record(new WallpaperInfo(wallpapers.get(index).toString(), getGlobalConfig().getWallpaperDisplayTime() * 1000L));
+                    WallpaperInfoHandler.record(new WallpaperInfo(wallpapers.get(index).toString(), getGlobalConfig().getWallpaperDisplayTime() * 1000L));
                 }
             } else {
                 index = 0;
-                WallpaperInfoRecorder.record(new WallpaperInfo(wallpapers.get(0).toString(), getGlobalConfig().getWallpaperDisplayTime() * 1000L));
+                WallpaperInfoHandler.record(new WallpaperInfo(wallpapers.get(0).toString(), getGlobalConfig().getWallpaperDisplayTime() * 1000L));
             }
             Controller.flushCurrentWallpaperText();
         }
@@ -188,7 +188,7 @@ public class WallpaperManager {
             index++;
             if (index == wallpapers.size()) index = 0;
             WallpaperChanger.changeWallpaper(wallpapers.get(index));
-            WallpaperInfoRecorder.record(getWallpaperInfo());
+            WallpaperInfoHandler.record(getWallpaperInfo());
             Controller.flushCurrentWallpaperText();
             if (updateScheduler) {
                 synchronized (SCHEDULE_LOCKER) {
@@ -204,7 +204,7 @@ public class WallpaperManager {
             index--;
             if (index == -1) index = wallpapers.size() - 1;
             WallpaperChanger.changeWallpaper(wallpapers.get(index));
-            WallpaperInfoRecorder.record(getWallpaperInfo());
+            WallpaperInfoHandler.record(getWallpaperInfo());
             Controller.flushCurrentWallpaperText();
             if (updateScheduler) {
                 synchronized (SCHEDULE_LOCKER) {
@@ -239,7 +239,7 @@ public class WallpaperManager {
             state = s;
             switch (state) {
                 case IN_CLASS:
-                    WallpaperInfoRecorder.record(getWallpaperInfo());
+                    WallpaperInfoHandler.record(getWallpaperInfo());
                     WallpaperChanger.changeWallpaper(normalWallpaper);
                     synchronized (SCHEDULE_LOCKER) {
                         scheduler.wallpaperSwitchTimer.stop();

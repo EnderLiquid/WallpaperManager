@@ -7,7 +7,7 @@ import java.io.*;
 
 import static com.enderliquid.wallpaper.service.WallpaperManager.globalLogger;
 
-public class WallpaperInfoRecorder {
+public class WallpaperInfoHandler {
 
     private static File tempFile;
     private static WallpaperInfo latestInfo;
@@ -42,8 +42,8 @@ public class WallpaperInfoRecorder {
     }
 
     public static synchronized WallpaperInfo inquire() {
-        globalLogger.info("正在查询壁纸信息");
         if (latestInfo != null) return latestInfo;
+        globalLogger.info("正在查询壁纸信息");
         if (tempFile == null) {
             globalLogger.warning("壁纸信息记录器未进行初始化，无法进行信息查询");
             return null;
