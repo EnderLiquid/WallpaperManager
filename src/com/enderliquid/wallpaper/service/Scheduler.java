@@ -14,7 +14,6 @@ import static com.enderliquid.wallpaper.service.WallpaperManager.globalLogger;
 public class Scheduler {
     public final FixedRateTimer wallpaperSwitchTimer;
     public final FixedRateTimer wallpaperInfoRecordTimer;
-    public final FixedRateTimer syncWithScheduleTimer;
     public final List<FixedRateTimer> stateSwitchTimers = new LinkedList<>();
 
     public Scheduler() {
@@ -35,11 +34,6 @@ public class Scheduler {
                 () -> WallpaperInfoRecorder.record(WallpaperManager.getWallpaperInfo()),
                 config.getWallpaperInfoRecordInterval() * 1000L,
                 config.getWallpaperInfoRecordInterval() * 1000L
-        );
-        syncWithScheduleTimer = new FixedRateTimer(
-                WallpaperManager::syncWithSchedule,
-                config.getSyncWithScheduleInterval() * 1000L,
-                config.getSyncWithScheduleInterval() * 1000L
         );
         for (TimeOfWeek[] clazz : config.getScheduleInObjects()) {
             stateSwitchTimers.add(new FixedRateTimer(

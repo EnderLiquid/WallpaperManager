@@ -139,7 +139,6 @@ public class WallpaperManager {
             if (scheduler != null) {
                 scheduler.wallpaperSwitchTimer.stop();
                 scheduler.wallpaperInfoRecordTimer.stop();
-                scheduler.syncWithScheduleTimer.stop();
                 for (FixedRateTimer t : scheduler.stateSwitchTimers) {
                     t.stop();
                 }
@@ -275,14 +274,11 @@ public class WallpaperManager {
                     synchronized (SCHEDULE_LOCKER) {
                         if (getState() == State.AFTER_CLASS) scheduler.wallpaperSwitchTimer.start();
                         syncWithSchedule();
-                        scheduler.syncWithScheduleTimer.reset();
-                        scheduler.syncWithScheduleTimer.start();
                     }
                     break;
                 case MANUAL:
                     synchronized (SCHEDULE_LOCKER) {
                         scheduler.wallpaperSwitchTimer.stop();
-                        scheduler.syncWithScheduleTimer.stop();
                     }
                     break;
             }

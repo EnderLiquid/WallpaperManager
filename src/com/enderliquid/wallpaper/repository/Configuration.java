@@ -27,7 +27,6 @@ public class Configuration {
     public static final Path defaultNormalWallpaperPath = Paths.get("./normal.png");//normalWallpaper相关
     public static final int defaultApplyWallpaperModificationDelayInMillis = 300;//WallpaperChanger相关
     public static final int defaultWallpaperInfoRecordInterval = 20;//Scheduler相关
-    public static final int defaultSyncWithScheduleInterval = 30;//Scheduler相关
     public static final int defaultPort = 25564;
     public static final boolean defaultEnableShortcuts = true;
     public static final int[][] defaultSchedule = new int[][]{
@@ -41,7 +40,6 @@ public class Configuration {
     private Path normalWallpaperPath = defaultNormalWallpaperPath;
     private int applyWallpaperModificationDelayInMillis = defaultApplyWallpaperModificationDelayInMillis;
     private int wallpaperInfoRecordInterval = defaultWallpaperInfoRecordInterval;
-    private int syncWithScheduleInterval = defaultSyncWithScheduleInterval;
     private boolean enableShortcuts = defaultEnableShortcuts;
     private int port = defaultPort;
     private int[][] schedule = defaultSchedule;
@@ -175,15 +173,6 @@ public class Configuration {
     public void setNormalWallpaperPath(Path normalWallpaperPath) {
         if (!editable) throw new UnsupportedOperationException();
         this.normalWallpaperPath = normalWallpaperPath;
-    }
-
-    public int getSyncWithScheduleInterval() {
-        return syncWithScheduleInterval;
-    }
-
-    public void setSyncWithScheduleInterval(int syncWithScheduleInterval) {
-        if (!editable) throw new UnsupportedOperationException();
-        this.syncWithScheduleInterval = syncWithScheduleInterval;
     }
 
     public int getWallpaperInfoRecordInterval() {
