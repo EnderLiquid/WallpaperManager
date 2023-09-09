@@ -3,9 +3,9 @@ package com.enderliquid.wallpaper.service;
 import com.enderliquid.wallpaper.controller.Controller;
 import com.enderliquid.wallpaper.model.TimeOfWeek;
 import com.enderliquid.wallpaper.model.WallpaperInfo;
+import com.enderliquid.wallpaper.repository.Cache;
 import com.enderliquid.wallpaper.repository.Configuration;
 import com.enderliquid.wallpaper.repository.ImageDeepScanner;
-import com.enderliquid.wallpaper.repository.WallpaperInfoHandler;
 import com.enderliquid.wallpaper.util.Utility;
 import javafx.application.Application;
 
@@ -46,7 +46,7 @@ public class WallpaperManager {
             exit(-1);
         }
         globalLogger.info("开始进行初始化");
-        WallpaperInfoHandler.initialize();
+        Cache.initialize();
         WallpaperChanger.initialize();
         load();
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
@@ -63,7 +63,7 @@ public class WallpaperManager {
         setMode(mode, true);
     }
 
-    public static void loadLogger() {
+    private static void loadLogger() {
         Handler handler;
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH.mm.ss");
@@ -75,32 +75,30 @@ public class WallpaperManager {
                 WallpaperManager.exit(-1);
             }
             handler = new FileHandler(logFile.toString());
-            for (Handler h : globalLogger.getHandlers()) {
-                h.close();
-            }
             Objects.requireNonNull(handler).setFormatter(new SimpleFormatter());
             globalLogger.addHandler(handler);
             globalLogger.info("日志文件创建成功");
+            for (Handler h : globalLogger.getHandlers()) {
+                h.close();
+            }
         } catch (IOException e) {
             globalLogger.warning("无法创建日志文件" + exceptionDetailsOf(e));
         }
     }
 
-    public static void loadGlobalConfig() {
+    private static void loadGlobalConfig() {
         synchronized (GLOBAL_CONFIG_LOCKER) {
             globalConfig = Configuration.getInstance();
-            globalConfig.freeze();
             globalLogger.info("成功获取配置实例");
         }
     }
-
     public static Configuration getGlobalConfig() {
         synchronized (GLOBAL_CONFIG_LOCKER) {
             return globalConfig;
         }
     }
 
-    public static void loadWallpapers() {
+    private static void loadWallpapers() {
         synchronized (WALLPAPER_LOCKER) {
             globalLogger.info("开始加载壁纸");
             normalWallpaper = globalConfig.getNormalWallpaperPath().toFile();
@@ -115,7 +113,7 @@ public class WallpaperManager {
             }
             Collections.sort(wallpapers);
             globalLogger.info("成功加载壁纸");
-            WallpaperInfo info = WallpaperInfoHandler.inquire();
+            WallpaperInfo info = Cache.inquire();
             if (info != null) {
                 index = Collections.binarySearch(wallpapers, new File(info.wallpaper));
                 if (index < 0) {
@@ -123,33 +121,26 @@ public class WallpaperManager {
                     if (index >= wallpapers.size()) {
                         index = 0;
                     }
-                    WallpaperInfoHandler.record(new WallpaperInfo(wallpapers.get(index).toString(), getGlobalConfig().getWallpaperDisplayTime() * 1000L));
+                    Cache.record(new WallpaperInfo(wallpapers.get(index).toString(), getGlobalConfig().getWallpaperDisplayTime() * 1000L));
                 }
             } else {
                 index = 0;
-                WallpaperInfoHandler.record(new WallpaperInfo(wallpapers.get(0).toString(), getGlobalConfig().getWallpaperDisplayTime() * 1000L));
+                Cache.record(new WallpaperInfo(wallpapers.get(0).toString(), getGlobalConfig().getWallpaperDisplayTime() * 1000L));
             }
             Controller.flushCurrentWallpaperText();
         }
     }
 
-    public static void loadScheduler() {
+    private static void loadScheduler() {
         synchronized (SCHEDULE_LOCKER) {
             if (scheduler != null) {
-                scheduler.wallpaperSwitchTimer.stop();
-                scheduler.wallpaperInfoRecordTimer.stop();
-                for (FixedRateTimer t : scheduler.stateSwitchTimers) {
-                    t.stop();
-                }
+                scheduler.stop();
             }
             scheduler = new Scheduler();
-            for (FixedRateTimer t : scheduler.stateSwitchTimers) {
-                t.start();
-            }
         }
     }
 
-    public static void syncWithSchedule() {
+    private static void syncWithSchedule() {
         synchronized (SYNC_LOCKER) {
             globalLogger.info("正在与日程表同步");
             State latestUpdate = State.AFTER_CLASS;
@@ -187,7 +178,7 @@ public class WallpaperManager {
             index++;
             if (index == wallpapers.size()) index = 0;
             WallpaperChanger.changeWallpaper(wallpapers.get(index));
-            WallpaperInfoHandler.record(getWallpaperInfo());
+            Cache.record(getWallpaperInfo());
             Controller.flushCurrentWallpaperText();
             if (updateScheduler) {
                 synchronized (SCHEDULE_LOCKER) {
@@ -203,7 +194,7 @@ public class WallpaperManager {
             index--;
             if (index == -1) index = wallpapers.size() - 1;
             WallpaperChanger.changeWallpaper(wallpapers.get(index));
-            WallpaperInfoHandler.record(getWallpaperInfo());
+            Cache.record(getWallpaperInfo());
             Controller.flushCurrentWallpaperText();
             if (updateScheduler) {
                 synchronized (SCHEDULE_LOCKER) {
@@ -238,7 +229,7 @@ public class WallpaperManager {
             state = s;
             switch (state) {
                 case IN_CLASS:
-                    WallpaperInfoHandler.record(getWallpaperInfo());
+                    Cache.record(getWallpaperInfo());
                     WallpaperChanger.changeWallpaper(normalWallpaper);
                     synchronized (SCHEDULE_LOCKER) {
                         scheduler.wallpaperSwitchTimer.stop();
@@ -287,7 +278,7 @@ public class WallpaperManager {
 
     public static synchronized void exit(int status) {
         globalLogger.info("预料内的停止操作");
-        ShutdownHook.processing();
+        ShutdownHook.process();
         System.exit(status);
     }
 

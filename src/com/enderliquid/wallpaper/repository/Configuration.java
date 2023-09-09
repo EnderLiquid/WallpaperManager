@@ -25,7 +25,7 @@ public class Configuration {
     public static final String[] defaultFileExtensions = new String[]{"jpg", "png", "bmp"};//WallpaperChanger,wallpapers相关
     public static final int defaultWallpaperDisplayTime = 120;//Scheduler相关
     public static final Path defaultWallpaperPath = Paths.get("./wallpaper/");//wallpapers相关
-    public static final Path defaultNormalWallpaperPath = Paths.get("./normal.png");//normalWallpaper相关
+    public static final Path defaultNormalWallpaperPath = Paths.get("./normal.jpg");//normalWallpaper相关
     public static final int defaultApplyWallpaperModificationDelayInMillis = 300;//WallpaperChanger相关
     public static final int defaultWallpaperInfoRecordInterval = 20;//Scheduler相关
     public static final int defaultPort = 25564;
@@ -34,6 +34,8 @@ public class Configuration {
             {10710, 10750},
             {10800, 10840},
     };
+    @JSONField(serialize = false, deserialize = false)
+    private static Configuration defaultInstance;
     private int maxScanningFileCount = defaultMaxScanningFileCount;
     private String[] fileExtensions = defaultFileExtensions;
     private int wallpaperDisplayTime = defaultWallpaperDisplayTime;
@@ -45,24 +47,27 @@ public class Configuration {
     private int port = defaultPort;
     private int[][] schedule = defaultSchedule;
     @JSONField(serialize = false, deserialize = false)
-    private TimeOfWeek[][] scheduleInObjects;
+    private TimeOfWeek[][] resolvedSchedule;
     @JSONField(serialize = false, deserialize = false)
     private volatile boolean editable = true;
 
     @JSONField(serialize = false, deserialize = false)
     private static Configuration getDefaultInstance() {
-        Configuration result = new Configuration();
-        try {
-            result.scheduleInObjects = scheduleToScheduleInObjects(defaultSchedule);
-        } catch (RuntimeException e) {
-            globalLogger.severe("默认日程表存在问题");
-            WallpaperManager.exit(-1);
+        if (defaultInstance == null) {
+            defaultInstance = new Configuration();
+            try {
+                defaultInstance.resolvedSchedule = resolveSchedule(defaultSchedule);
+            } catch (RuntimeException e) {
+                globalLogger.severe("默认日程表存在问题");
+                WallpaperManager.exit(-1);
+            }
         }
-        return result;
+        defaultInstance.freeze();
+        return defaultInstance;
     }
 
-    private static TimeOfWeek[][] scheduleToScheduleInObjects(int[][] schedule) {
-        TimeOfWeek[][] scheduleInObjects = new TimeOfWeek[schedule.length][2];
+    private static TimeOfWeek[][] resolveSchedule(int[][] schedule) {
+        TimeOfWeek[][] resolvedSchedule = new TimeOfWeek[schedule.length][2];
         try {
             if (schedule.length == 0) {
                 globalLogger.warning("日程表为空");
@@ -71,10 +76,10 @@ public class Configuration {
             globalLogger.info("正在解析日程表");
             for (int i = 0; i < schedule.length; i++) {
                 for (int j = 0; j <= 1; j++) {
-                    scheduleInObjects[i][j] = new TimeOfWeek(schedule[i][j]);
+                    resolvedSchedule[i][j] = new TimeOfWeek(schedule[i][j]);
                 }
             }
-            return scheduleInObjects;
+            return resolvedSchedule;
         } catch (RuntimeException e) {
             globalLogger.warning("无法解析日程表" + Utility.exceptionDetailsOf(e));
             throw e;
@@ -90,13 +95,12 @@ public class Configuration {
             configFile = new File(configFile, "config.json");
             if (configFile.createNewFile()) {
                 globalLogger.info("未检测到配置文件，将使用默认配置，并生成默认配置文件");
-                Configuration defaultConfig = getDefaultInstance();
                 try (FileWriter defaultConfigWriter = new FileWriter(configFile, StandardCharsets.UTF_8)) {
-                    defaultConfigWriter.write(JSON.toJSONString(defaultConfig, SerializerFeature.PrettyFormat));
+                    defaultConfigWriter.write(JSON.toJSONString(getDefaultInstance(), SerializerFeature.PrettyFormat));
                 } catch (IOException e) {
                     globalLogger.warning("无法生成默认配置文件" + Utility.exceptionDetailsOf(e));
                 }
-                return defaultConfig;
+                return getDefaultInstance();
             }
             FileReader configReader = new FileReader(configFile);
             Scanner configScanner = new Scanner(configReader);
@@ -109,11 +113,12 @@ public class Configuration {
             globalLogger.info("成功读取配置文件内容");
             Configuration instance = Objects.requireNonNull(JSON.parseObject(jsonContent, Configuration.class));
             try {
-                instance.scheduleInObjects = scheduleToScheduleInObjects(instance.schedule);
+                instance.resolvedSchedule = resolveSchedule(instance.schedule);
             } catch (RuntimeException e) {
                 globalLogger.warning("将使用默认日程配置");
-                return getDefaultInstance();
+                instance.resolvedSchedule = getDefaultInstance().resolvedSchedule;
             }
+            instance.freeze();
             return instance;
         } catch (IOException | NullPointerException | JSONException e) {
             globalLogger.warning("无法读取配置文件或配置文件内容有误，将使用默认配置" + Utility.exceptionDetailsOf(e));
@@ -212,7 +217,7 @@ public class Configuration {
     }
 
     public TimeOfWeek[][] getScheduleInObjects() {
-        return scheduleInObjects;
+        return resolvedSchedule;
     }
 
     public void freeze() {

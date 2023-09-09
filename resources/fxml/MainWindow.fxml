@@ -50,7 +50,7 @@
             </font>
         </Text>
         <Text fx:id="currentWallpaperText" layoutX="45.0" layoutY="67.0" strokeType="OUTSIDE" strokeWidth="0.0"
-              text="Name:Path" wrappingWidth="348.240234375">
+              text="Name" wrappingWidth="348.240234375">
             <font>
                 <Font size="14.0"/>
             </font>
