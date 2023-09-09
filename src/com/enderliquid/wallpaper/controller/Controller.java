@@ -35,8 +35,8 @@ public class Controller extends Application {
     public static final String appName = "壁纸管理器";
     private static final int HIDE_OR_SHOW_MARK = 0;
     private static final int URGENT_PROCESS_MARK = 1;
-    public static Controller instance;
-    private static Stage primaryStage;
+    public static Controller controller;
+    private Stage primaryStage;
     @FXML
     private Pane pane;
     @FXML
@@ -73,23 +73,38 @@ public class Controller extends Application {
     }
 
     public static synchronized void flushCurrentWallpaperText() {
-        if (instance == null) return;
-        instance.currentWallpaperText.setText(WallpaperManager.getCurrentWallpaperName());
+        if (controller == null) return;
+        controller.currentWallpaperText.setText(WallpaperManager.getCurrentWallpaperName());
     }
 
     public static synchronized void flushState() {
-        if (instance == null) return;
-        instance.currentStateText.setText(WallpaperManager.getState().getName());
-        instance.switchStateButton.setSelected(WallpaperManager.getState().isSelected());
+        if (controller == null) return;
+        controller.currentStateText.setText(WallpaperManager.getState().getName());
+        controller.switchStateButton.setSelected(WallpaperManager.getState().isSelected());
     }
 
-    public static void flushMode() {
-        if (instance == null) return;
-        instance.currentModeText.setText(WallpaperManager.getMode().getName());
-        instance.switchModeButton.setSelected(WallpaperManager.getMode().isSelected());
+    public static synchronized void flushMode() {
+        if (controller == null) return;
+        controller.currentModeText.setText(WallpaperManager.getMode().getName());
+        controller.switchModeButton.setSelected(WallpaperManager.getMode().isSelected());
     }
 
-    private static synchronized void hideOrShow() {
+    private static synchronized void urgentProcess() {
+        setMode(Mode.MANUAL, false);
+        setState(State.IN_CLASS, false);
+        globalLogger.info("已进行紧急处理");
+    }
+
+    public synchronized static void setOnTop() {
+        if (controller.primaryStage == null) return;
+        Platform.runLater(() -> {
+            controller.primaryStage.show();
+            controller.primaryStage.setIconified(false);
+        });
+        globalLogger.info("窗口已置顶");
+    }
+
+    private void hideOrShow() {
         if (primaryStage == null) return;
         if (primaryStage.isShowing()) {
             Platform.runLater(() -> {
@@ -101,21 +116,6 @@ public class Controller extends Application {
             Platform.runLater(primaryStage::show);
             globalLogger.info("窗口已显示");
         }
-    }
-
-    private static synchronized void urgentProcess() {
-        setMode(Mode.MANUAL, false);
-        setState(State.IN_CLASS, false);
-        globalLogger.info("已进行紧急处理");
-    }
-
-    public static synchronized void setOnTop() {
-        if (primaryStage == null) return;
-        Platform.runLater(() -> {
-            primaryStage.show();
-            primaryStage.setIconified(false);
-        });
-        globalLogger.info("窗口已置顶");
     }
 
     @FXML
@@ -183,7 +183,7 @@ public class Controller extends Application {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getClassLoader().getResource(MainWindowFxmlPath));
             root = loader.load();
-            instance = loader.getController();
+            controller = loader.getController();
         } catch (RuntimeException e) {
             globalLogger.severe("fxml文件无法被加载" + exceptionDetailsOf(e));
             WallpaperManager.exit(-1);
@@ -197,13 +197,32 @@ public class Controller extends Application {
         Platform.setImplicitExit(false);
         primaryStage.setResizable(false);
         Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
-        primaryStage.setX(dimension.width - instance.pane.getPrefWidth());
-        primaryStage.setY(dimension.height - instance.pane.getPrefHeight() - 70);
+        primaryStage.setX(dimension.width - controller.pane.getPrefWidth());
+        primaryStage.setY(dimension.height - controller.pane.getPrefHeight() - 70);
+        Image imageIcon;
+        InputStream imageInputStream;
+        String iconPath = "icon/icon.png";
+        try {
+            imageInputStream = Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream(iconPath));
+        } catch (NullPointerException e) {
+            globalLogger.warning("图标文件输入流无法被创建" + exceptionDetailsOf(e));
+            return;
+        }
+        imageIcon = new Image(imageInputStream);
+        primaryStage.getIcons().add(imageIcon);
+        primaryStage.show();
+        registryShortcuts();
+        loadSystemTray(imageIcon);
+        primaryStage.hide();
+    }
+
+    private void registryShortcuts() {
         globalLogger.info("正在注册并监听快捷键");
         try {
-            JIntellitype.getInstance().registerHotKey(HIDE_OR_SHOW_MARK, JIntellitype.MOD_CONTROL + JIntellitype.MOD_ALT, 'D');
-            JIntellitype.getInstance().registerHotKey(URGENT_PROCESS_MARK, JIntellitype.MOD_CONTROL + JIntellitype.MOD_ALT, 'E');
-            JIntellitype.getInstance().addHotKeyListener((markCode) -> {
+            JIntellitype instance = JIntellitype.getInstance();
+            instance.registerHotKey(HIDE_OR_SHOW_MARK, JIntellitype.MOD_CONTROL + JIntellitype.MOD_ALT, 'D');
+            instance.registerHotKey(URGENT_PROCESS_MARK, JIntellitype.MOD_CONTROL + JIntellitype.MOD_ALT, 'E');
+            instance.addHotKeyListener((markCode) -> {
                 if (!getGlobalConfig().isEnableShortcuts()) return;
                 switch (markCode) {
                     case HIDE_OR_SHOW_MARK:
@@ -217,26 +236,16 @@ public class Controller extends Application {
         } catch (JIntellitypeException e) {
             globalLogger.warning("快捷键无法被注册并监听");
         }
-        primaryStage.show();
+    }
+
+    private void loadSystemTray(Image imageIcon) {
         globalLogger.info("正在创建系统托盘");
         if (!SystemTray.isSupported()) {
             globalLogger.warning("当前环境不支持系统托盘");
             return;
         }
         SystemTray tray = SystemTray.getSystemTray();
-        BufferedImage bufferedImageIcon;
-        Image imageIcon;
-        InputStream imageInputStream;
-        String iconPath = "icon/icon.png";
-        try {
-            imageInputStream = Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream(iconPath));
-        } catch (NullPointerException e) {
-            globalLogger.warning("图标文件输入流无法被创建" + exceptionDetailsOf(e));
-            return;
-        }
-        imageIcon = new Image(imageInputStream);
-        primaryStage.getIcons().add(imageIcon);
-        bufferedImageIcon = SwingFXUtils.fromFXImage(imageIcon, null);
+        BufferedImage bufferedImageIcon = SwingFXUtils.fromFXImage(imageIcon, null);
         TrayIcon trayIcon;
         trayIcon = new TrayIcon(bufferedImageIcon, appName);
         trayIcon.setImageAutoSize(true);
@@ -257,6 +266,5 @@ public class Controller extends Application {
             }
         });
         globalLogger.info("创建系统托盘成功");
-        primaryStage.hide();
     }
 }

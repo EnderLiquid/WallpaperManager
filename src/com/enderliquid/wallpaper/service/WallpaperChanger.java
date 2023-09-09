@@ -15,9 +15,9 @@ public class WallpaperChanger {
     private static final int SPI_SETDESKWALLPAPER = 0x0014;
     private static final int SPIF_UPDATEINIFILE = 0x0001;
     private static final int SPIF_SENDWININICHANGE = 0x0002;
-    private static final Object lock = new Object();
-    private static boolean failure = false;
-    private static volatile File imageToDisplay = null;
+    private static final Object LOCKER = new Object();
+    private static boolean hasFailed = false;
+    private static File imageToDisplay = null;
 
     public static void initialize() {
         globalLogger.info("正在初始化壁纸更换器");
@@ -25,9 +25,9 @@ public class WallpaperChanger {
     }
 
     public static void changeWallpaper(File img) {
-        imageToDisplay = img;
-        synchronized (lock) {
-            lock.notify();
+        synchronized (LOCKER) {
+            imageToDisplay = img;
+            LOCKER.notify();
         }
     }
 
@@ -41,43 +41,48 @@ public class WallpaperChanger {
         public void run() {
             File latestImage = null;
             while (!Thread.interrupted()) {
-                while (latestImage == imageToDisplay) {
-                    synchronized (lock) {
+                synchronized (LOCKER) {
+                    while (latestImage == imageToDisplay) {
                         try {
-                            lock.wait();
+                            LOCKER.wait();
                         } catch (InterruptedException e) {
                             globalLogger.warning("线程被意外中断");
                         }
                     }
+                    latestImage = imageToDisplay;
                 }
-                latestImage = imageToDisplay;
-                boolean result = false;
+                boolean succeeded = false;
                 try {
                     if (!isImage(latestImage)) {
                         globalLogger.warning("找不到指定的壁纸");
+                        continue;
                     }
                     globalLogger.info("尝试切换到壁纸：" + latestImage);
-                    Runtime.getRuntime().exec(String.format("reg add \"hkcu\\control panel\\desktop\" /v wallpaper /d \"%s\" /f", latestImage.getAbsoluteFile()));
+                    try {
+                        Runtime.getRuntime().exec(String.format("reg add \"hkcu\\control panel\\desktop\" /v wallpaper /d \"%s\" /f", latestImage.getAbsoluteFile()));
+                    } catch (IOException e) {
+                        globalLogger.warning("执行命令行失败" + exceptionDetailsOf(e));
+                        continue;
+                    }
                     try {
                         Thread.sleep(getGlobalConfig().getApplyWallpaperModificationDelayInMillis());
                     } catch (InterruptedException e) {
                         globalLogger.warning("线程被意外中断");
+                        continue;
                     }
                     if (!MyUser32.INSTANCE.SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, null, SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE)) {
                         globalLogger.warning("更换到指定的壁纸失败");
+                        continue;
                     }
                     globalLogger.info("切换壁纸成功");
-                    result = true;
-                } catch (IOException e) {
-                    globalLogger.warning("执行命令行失败" + exceptionDetailsOf(e));
+                    succeeded = true;
                 } finally {
-                    if (result) failure = false;
+                    if (succeeded) hasFailed = false;
                     else {
-                        if (failure) {
+                        if (hasFailed) {
                             globalLogger.severe("壁纸切换连续失败，程序将停止运行");
                             WallpaperManager.exit(-1);
                         }
-                        failure = true;
                         WallpaperManager.load();
                     }
                 }

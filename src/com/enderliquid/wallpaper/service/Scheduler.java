@@ -1,8 +1,9 @@
 package com.enderliquid.wallpaper.service;
 
 import com.enderliquid.wallpaper.model.TimeOfWeek;
+import com.enderliquid.wallpaper.repository.Cache;
 import com.enderliquid.wallpaper.repository.Configuration;
-import com.enderliquid.wallpaper.repository.WallpaperInfoHandler;
+import com.enderliquid.wallpaper.service.WallpaperManager.State;
 
 import java.time.LocalDateTime;
 import java.util.LinkedList;
@@ -16,12 +17,12 @@ public class Scheduler {
     public final FixedRateTimer wallpaperInfoRecordTimer;
     public final List<FixedRateTimer> stateSwitchTimers = new LinkedList<>();
 
-    public Scheduler() {
+    Scheduler() {
         globalLogger.info("开始构造调度器");
         long remainingTime;
         Configuration config = WallpaperManager.getGlobalConfig();
         try {
-            remainingTime = Objects.requireNonNull(WallpaperInfoHandler.inquire()).remainingTime;
+            remainingTime = Objects.requireNonNull(Cache.inquire()).remainingTime;
         } catch (NullPointerException e) {
             remainingTime = config.getWallpaperDisplayTime() * 1000L;
         }
@@ -31,28 +32,33 @@ public class Scheduler {
                 config.getWallpaperDisplayTime() * 1000L
         );
         wallpaperInfoRecordTimer = new FixedRateTimer(
-                () -> WallpaperInfoHandler.record(WallpaperManager.getWallpaperInfo()),
+                () -> Cache.record(WallpaperManager.getWallpaperInfo()),
                 config.getWallpaperInfoRecordInterval() * 1000L,
                 config.getWallpaperInfoRecordInterval() * 1000L
         );
         for (TimeOfWeek[] clazz : config.getScheduleInObjects()) {
-            stateSwitchTimers.add(new FixedRateTimer(
-                    () -> {
-                        if (WallpaperManager.getMode() == WallpaperManager.Mode.AUTOMATIC)
-                            WallpaperManager.setState(WallpaperManager.State.IN_CLASS, false);
-                    },
-                    clazz[0].getDelay(LocalDateTime.now()),
-                    7 * 24 * 60 * 60 * 1000L
-            ));
-            stateSwitchTimers.add(new FixedRateTimer(
-                    () -> {
-                        if (WallpaperManager.getMode() == WallpaperManager.Mode.AUTOMATIC)
-                            WallpaperManager.setState(WallpaperManager.State.AFTER_CLASS, false);
-                    },
-                    clazz[1].getDelay(LocalDateTime.now()),
-                    7 * 24 * 60 * 60 * 1000L
-            ));
+            FixedRateTimer timer;
+            for (State state : State.values()) {
+                timer = new FixedRateTimer(
+                        () -> {
+                            if (WallpaperManager.getMode() == WallpaperManager.Mode.AUTOMATIC)
+                                WallpaperManager.setState(state, false);
+                        },
+                        clazz[state.ordinal()].getDelay(LocalDateTime.now()),
+                        7 * 24 * 60 * 60 * 1000L
+                );
+                timer.start();
+                stateSwitchTimers.add(timer);
+            }
         }
         globalLogger.info("成功构造调度器");
+    }
+
+    public void stop() {
+        wallpaperSwitchTimer.stop();
+        wallpaperInfoRecordTimer.stop();
+        for (FixedRateTimer t : stateSwitchTimers) {
+            t.stop();
+        }
     }
 }

@@ -14,18 +14,18 @@ import static com.enderliquid.wallpaper.service.WallpaperManager.globalLogger;
 public class SingleProcessVerifier {
     private static final String HOST = "localhost";
     private static ServerSocket server;
-    private static Thread handleThread;
+    private static Thread handler;
     private static int port = -1;
 
     public static synchronized void verify() {
         Configuration config = getGlobalConfig();
         if (config.getPort() != port) {
             port = config.getPort();
-            if (handleThread != null) {
+            if (handler != null) {
                 globalLogger.info("正在关闭原有的socket");
                 try {
                     server.close();
-                    handleThread.interrupt();
+                    handler.interrupt();
                 } catch (IOException e) {
                     globalLogger.warning("关闭socket时出现异常" + Utility.exceptionDetailsOf(e));
                 }
@@ -34,7 +34,7 @@ public class SingleProcessVerifier {
             try {
                 server = new ServerSocket(port);
                 globalLogger.info("成功监听端口：" + port);
-                handleThread = new Thread(() -> {
+                handler = new Thread(() -> {
                     while (!Thread.interrupted()) {
                         try {
                             server.accept();
@@ -45,7 +45,7 @@ public class SingleProcessVerifier {
                         }
                     }
                 });
-                handleThread.start();
+                handler.start();
             } catch (IOException e) {
                 globalLogger.severe("端口已被占用：" + port + Utility.exceptionDetailsOf(e));
                 globalLogger.info("正在连接到原有进程的socket");
