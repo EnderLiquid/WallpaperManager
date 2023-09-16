@@ -35,8 +35,8 @@ public class Controller extends Application {
     public static final String appName = "壁纸管理器";
     private static final int HIDE_OR_SHOW_MARK = 0;
     private static final int URGENT_PROCESS_MARK = 1;
-    public static Controller controller;
-    private Stage primaryStage;
+    private static volatile Controller controller;
+    private static volatile Stage primaryStage;
     @FXML
     private Pane pane;
     @FXML
@@ -72,50 +72,60 @@ public class Controller extends Application {
         flushCurrentWallpaperText();
     }
 
-    public static synchronized void flushCurrentWallpaperText() {
+    public static void flushCurrentWallpaperText() {
         if (controller == null) return;
-        controller.currentWallpaperText.setText(WallpaperManager.getCurrentWallpaperName());
+        Platform.runLater(() ->
+                controller.currentWallpaperText.setText(WallpaperManager.getCurrentWallpaperName()
+                ));
     }
 
-    public static synchronized void flushState() {
+    public static void flushState() {
         if (controller == null) return;
+        Platform.runLater(() -> {
         controller.currentStateText.setText(WallpaperManager.getState().getName());
         controller.switchStateButton.setSelected(WallpaperManager.getState().isSelected());
+        });
     }
 
-    public static synchronized void flushMode() {
+    public static void flushMode() {
         if (controller == null) return;
-        controller.currentModeText.setText(WallpaperManager.getMode().getName());
-        controller.switchModeButton.setSelected(WallpaperManager.getMode().isSelected());
+        Platform.runLater(() -> {
+            controller.currentModeText.setText(WallpaperManager.getMode().getName());
+            controller.switchModeButton.setSelected(WallpaperManager.getMode().isSelected());
+        });
     }
 
-    private static synchronized void urgentProcess() {
+    private static void urgentProcess() {
         setMode(Mode.MANUAL, false);
         setState(State.IN_CLASS, false);
         globalLogger.info("已进行紧急处理");
     }
 
-    public synchronized static void setOnTop() {
-        if (controller.primaryStage == null) return;
+    public static void setOnTop() {
+        if (primaryStage == null) return;
         Platform.runLater(() -> {
-            controller.primaryStage.show();
-            controller.primaryStage.setIconified(false);
+            primaryStage.show();
+            primaryStage.setIconified(false);
+            primaryStage.setAlwaysOnTop(true);
+            primaryStage.setAlwaysOnTop(false);
         });
         globalLogger.info("窗口已置顶");
     }
 
-    private void hideOrShow() {
+    private static void hideOrShow() {
         if (primaryStage == null) return;
-        if (primaryStage.isShowing()) {
-            Platform.runLater(() -> {
-                primaryStage.setIconified(false);
-                primaryStage.hide();
-            });
-            globalLogger.info("窗口已隐藏");
-        } else {
-            Platform.runLater(primaryStage::show);
-            globalLogger.info("窗口已显示");
-        }
+        Platform.runLater(() -> {
+            if (primaryStage.isShowing()) {
+                Platform.runLater(() -> {
+                    primaryStage.setIconified(false);
+                    primaryStage.hide();
+                });
+                globalLogger.info("窗口已隐藏");
+            } else {
+                primaryStage.show();
+                globalLogger.info("窗口已显示");
+            }
+        });
     }
 
     @FXML
