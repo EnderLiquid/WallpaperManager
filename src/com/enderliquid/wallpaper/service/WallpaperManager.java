@@ -92,6 +92,7 @@ public class WallpaperManager {
             globalLogger.info("成功获取配置实例");
         }
     }
+
     public static Configuration getGlobalConfig() {
         synchronized (GLOBAL_CONFIG_LOCKER) {
             return globalConfig;
@@ -148,18 +149,11 @@ public class WallpaperManager {
             long nextUpdateDelay = 7 * 24 * 60 * 60 * 1000L + 1;
             LocalDateTime startTime = LocalDateTime.now();
             long startMillis = System.currentTimeMillis();
-            for (TimeOfWeek[] clazz : getGlobalConfig().getScheduleInObjects()) {
-                for (int i = 0; i <= 1; i++) {
-                    long delay = clazz[i].getDelay(startTime);
+            for (TimeOfWeek[] course : getGlobalConfig().getResolvedSchedule()) {
+                for (State state : State.values()) {
+                    long delay = course[state.ordinal()].getDelay(startTime);
                     if (delay > latestUpdateDelay) {
-                        switch (i) {
-                            case 0:
-                                latestUpdate = State.IN_CLASS;
-                                break;
-                            case 1:
-                                latestUpdate = State.AFTER_CLASS;
-                                break;
-                        }
+                        latestUpdate = state;
                         latestUpdateDelay = delay;
                     }
                     if (delay < nextUpdateDelay) {
@@ -171,6 +165,7 @@ public class WallpaperManager {
             setState(latestUpdate, false);
         }
     }
+
 
     public static void next(boolean updateScheduler) {
         synchronized (WALLPAPER_LOCKER) {

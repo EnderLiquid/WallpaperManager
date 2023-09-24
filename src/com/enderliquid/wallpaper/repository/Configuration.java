@@ -216,7 +216,7 @@ public class Configuration {
         this.port = port;
     }
 
-    public TimeOfWeek[][] getScheduleInObjects() {
+    public TimeOfWeek[][] getResolvedSchedule() {
         return resolvedSchedule;
     }
 

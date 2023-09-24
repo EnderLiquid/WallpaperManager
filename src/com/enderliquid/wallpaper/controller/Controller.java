@@ -74,16 +74,14 @@ public class Controller extends Application {
 
     public static void flushCurrentWallpaperText() {
         if (controller == null) return;
-        Platform.runLater(() ->
-                controller.currentWallpaperText.setText(WallpaperManager.getCurrentWallpaperName()
-                ));
+        Platform.runLater(() -> controller.currentWallpaperText.setText(WallpaperManager.getCurrentWallpaperName()));
     }
 
     public static void flushState() {
         if (controller == null) return;
         Platform.runLater(() -> {
-        controller.currentStateText.setText(WallpaperManager.getState().getName());
-        controller.switchStateButton.setSelected(WallpaperManager.getState().isSelected());
+            controller.currentStateText.setText(WallpaperManager.getState().getName());
+            controller.switchStateButton.setSelected(WallpaperManager.getState().isSelected());
         });
     }
 

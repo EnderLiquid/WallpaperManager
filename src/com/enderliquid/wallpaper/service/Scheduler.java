@@ -36,7 +36,7 @@ public class Scheduler {
                 config.getWallpaperInfoRecordInterval() * 1000L,
                 config.getWallpaperInfoRecordInterval() * 1000L
         );
-        for (TimeOfWeek[] clazz : config.getScheduleInObjects()) {
+        for (TimeOfWeek[] course : config.getResolvedSchedule()) {
             FixedRateTimer timer;
             for (State state : State.values()) {
                 timer = new FixedRateTimer(
@@ -44,7 +44,7 @@ public class Scheduler {
                             if (WallpaperManager.getMode() == WallpaperManager.Mode.AUTOMATIC)
                                 WallpaperManager.setState(state, false);
                         },
-                        clazz[state.ordinal()].getDelay(LocalDateTime.now()),
+                        course[state.ordinal()].getDelay(LocalDateTime.now()),
                         7 * 24 * 60 * 60 * 1000L
                 );
                 timer.start();
