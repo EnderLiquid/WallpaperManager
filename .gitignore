@@ -4,6 +4,8 @@
 
 # Log file
 *.log
+*.txt
+*.lck
 
 # BlueJ files
 *.ctxt
@@ -24,3 +26,14 @@
 hs_err_pid*
 replay_pid*
 
+/out
+/.idea
+/wallpaper
+/config
+/cache
+/taskschd.bat
+/WallpaperManager.iml
+/normal.jpg
+
+*.gitignore
+*.bat
