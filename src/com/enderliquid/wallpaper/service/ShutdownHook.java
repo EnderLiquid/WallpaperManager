@@ -1,7 +1,5 @@
 package com.enderliquid.wallpaper.service;
 
-import com.enderliquid.wallpaper.repository.Cache;
-
 import static com.enderliquid.wallpaper.service.WallpaperManager.globalLogger;
 
 public class ShutdownHook extends Thread {
@@ -14,7 +12,7 @@ public class ShutdownHook extends Thread {
         }
         shuttingDown = true;
         try {
-            Cache.record(WallpaperManager.getWallpaperInfo());
+            WallpaperManager.saveCache();
         } catch (NullPointerException e) {
             globalLogger.warning("调度器未被初始化");
         }

@@ -18,7 +18,7 @@ public class Cache {
             tempFile = new File("./cache/");
             tempFile.mkdirs();
             tempFile = new File(tempFile, "record.bin");
-            tempFile.createNewFile();
+            if (tempFile.createNewFile()) globalLogger.info("已生成缓存文件");
             globalLogger.info("缓存器初始化完成");
 
         } catch (IOException e) {
@@ -26,7 +26,7 @@ public class Cache {
         }
     }
 
-    public static synchronized void record(WallpaperInfo info) {
+    public static synchronized void save(WallpaperInfo info) {
         globalLogger.info("正在记录壁纸信息");
         latestInfo = info;
         if (tempFile == null) {
@@ -52,7 +52,7 @@ public class Cache {
             latestInfo = new WallpaperInfo(inputStream.readUTF(), inputStream.readLong());
             return latestInfo;
         } catch (IOException e) {
-            globalLogger.warning("无法正常读取缓存文件" + Utility.exceptionDetailsOf(e));
+            globalLogger.warning("无法读取缓存文件，缓存文件可能从未被写入");
             return null;
         }
     }

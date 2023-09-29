@@ -27,7 +27,7 @@ import static com.enderliquid.wallpaper.util.Utility.isImage;
 public class WallpaperManager {
     public static final Logger globalLogger = Logger.getLogger("com.enderliquid.wallpaper");
     private static final Object GLOBAL_CONFIG_LOCKER = new Object();
-    private static final Object WALLPAPER_LOCKER = new Object();
+    private static final Object WALLPAPER_LOCKER = new Object();//index,wallpapers,state
     private static final Object MODE_LOCKER = new Object();
     private static final Object SYNC_LOCKER = new Object();
     private static final Object SCHEDULE_LOCKER = new Object();
@@ -55,6 +55,7 @@ public class WallpaperManager {
     }
 
     public synchronized static void load() {
+        saveCache();
         loadGlobalConfig();
         SingleProcessVerifier.verify();
         loadWallpapers();
@@ -78,9 +79,6 @@ public class WallpaperManager {
             Objects.requireNonNull(handler).setFormatter(new SimpleFormatter());
             globalLogger.addHandler(handler);
             globalLogger.info("日志文件创建成功");
-            for (Handler h : globalLogger.getHandlers()) {
-                h.close();
-            }
         } catch (IOException e) {
             globalLogger.warning("无法创建日志文件" + exceptionDetailsOf(e));
         }
@@ -115,6 +113,7 @@ public class WallpaperManager {
             Collections.sort(wallpapers);
             globalLogger.info("成功加载壁纸");
             WallpaperInfo info = Cache.inquire();
+            index = 0;
             if (info != null) {
                 index = Collections.binarySearch(wallpapers, new File(info.wallpaper));
                 if (index < 0) {
@@ -122,11 +121,7 @@ public class WallpaperManager {
                     if (index >= wallpapers.size()) {
                         index = 0;
                     }
-                    Cache.record(new WallpaperInfo(wallpapers.get(index).toString(), getGlobalConfig().getWallpaperDisplayTime() * 1000L));
                 }
-            } else {
-                index = 0;
-                Cache.record(new WallpaperInfo(wallpapers.get(0).toString(), getGlobalConfig().getWallpaperDisplayTime() * 1000L));
             }
             Controller.flushCurrentWallpaperText();
         }
@@ -173,7 +168,7 @@ public class WallpaperManager {
             index++;
             if (index == wallpapers.size()) index = 0;
             WallpaperChanger.changeWallpaper(wallpapers.get(index));
-            Cache.record(getWallpaperInfo());
+            saveCache();
             Controller.flushCurrentWallpaperText();
             if (updateScheduler) {
                 synchronized (SCHEDULE_LOCKER) {
@@ -189,7 +184,7 @@ public class WallpaperManager {
             index--;
             if (index == -1) index = wallpapers.size() - 1;
             WallpaperChanger.changeWallpaper(wallpapers.get(index));
-            Cache.record(getWallpaperInfo());
+            saveCache();
             Controller.flushCurrentWallpaperText();
             if (updateScheduler) {
                 synchronized (SCHEDULE_LOCKER) {
@@ -206,9 +201,13 @@ public class WallpaperManager {
         }
     }
 
-    public static WallpaperInfo getWallpaperInfo() {
+    public static void saveCache() {
         synchronized (WALLPAPER_LOCKER) {
-            return new WallpaperInfo(wallpapers.get(index).toString(), scheduler.wallpaperSwitchTimer.getRemainingTime());
+            if (scheduler == null) return;
+            Cache.save(new WallpaperInfo(
+                    wallpapers.get(index).toString(),
+                    scheduler.wallpaperSwitchTimer.getRemainingTime()
+            ));
         }
     }
 
@@ -224,7 +223,7 @@ public class WallpaperManager {
             state = s;
             switch (state) {
                 case IN_CLASS:
-                    Cache.record(getWallpaperInfo());
+                    saveCache();
                     WallpaperChanger.changeWallpaper(normalWallpaper);
                     synchronized (SCHEDULE_LOCKER) {
                         scheduler.wallpaperSwitchTimer.stop();
@@ -258,8 +257,8 @@ public class WallpaperManager {
                 case AUTOMATIC:
                     synchronized (SCHEDULE_LOCKER) {
                         if (getState() == State.AFTER_CLASS) scheduler.wallpaperSwitchTimer.start();
-                        syncWithSchedule();
                     }
+                    syncWithSchedule();
                     break;
                 case MANUAL:
                     synchronized (SCHEDULE_LOCKER) {

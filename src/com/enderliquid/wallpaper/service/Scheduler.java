@@ -32,7 +32,7 @@ public class Scheduler {
                 config.getWallpaperDisplayTime() * 1000L
         );
         wallpaperInfoRecordTimer = new FixedRateTimer(
-                () -> Cache.record(WallpaperManager.getWallpaperInfo()),
+                () -> WallpaperManager.saveCache(),
                 config.getWallpaperInfoRecordInterval() * 1000L,
                 config.getWallpaperInfoRecordInterval() * 1000L
         );
